@@ -1,0 +1,24 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Slechts Java</string>
+    <string name="toppings">Ingrediënten</string>
+    <string name="thank_you">Dankjewel!</string>
+    <string name="order_summary_name">Naam: <xliff:g id="name" example="Amy">%s</xliff:g></string>
+    <string name="edit_name">Naam</string>
+    <string name="whipped_cream">Slagroom</string>
+    <string name="chocolate">Chocolade</string>
+    <string name="quantity">Hoeveelheid</string>
+    <string name="price">Prijs</string>
+    <string name="amount_price">€0</string>
+    <string name="order">Bestel</string>
+    <string name="not_more">Je kan niet meer dan 100 koppen koffie bestellen.</string>
+    <string name="not_less">Je kan niet minder dan 1 kop koffie bestellen.</string>
+    <string name="just_java_for">Slechts Java voor <xliff:g id="name" example="Amy">%s</xliff:g></string>
+    <string name="add_whipped_cream">Slagroom toevoegen? <xliff:g id="b_whipped_cream" example="false">%b</xliff:g></string>
+    <string name="y_add_whipped_cream">Slagroom toevoegen? Ja</string>
+    <string name="n_add_whipped_cream">Slagroom toevoegen? Nee</string>
+    <string name="add_chocolate">Chocolade toevoegen? <xliff:g id="b_chocolate" example="false">%b</xliff:g></string>
+    <string name="y_add_chocolate">Chocolade toevoegen? Ja</string>
+    <string name="n_add_chocolate">Chocolade toevoegen? Nee</string>
+    <string name="order_quantity">Hoeveelheid: <xliff:g id="quantity" example="0">%d</xliff:g></string>
+    <string name="order_total">"Totaal: €<xliff:g id="totel_price" example="0">%d</xliff:g> "</string>
+</resources>
