@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">Fir-Sqlite</string>
+    <string name="app_name">Firebase</string>
+    <string name="sign_out">SIGN-OUT</string>
+    <string name="send_button_label">Send</string>
+
+    <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
+    <string name="default_notification_channel_name" translatable="true">News</string>
 </resources>
