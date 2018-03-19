@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int RC_PHOTO_PICKER =  2;
 
     private ListView mMessageListView;
-    private com.example.fir_sqlite.MessageAdapter mMessageAdapter;
+    private MessageAdapter mMessageAdapter;
     private ProgressBar mProgressBar;
     private ImageButton mImagePickerButton;
     private EditText mMessageEditText;
@@ -66,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener mAuthStateListener;
     private FirebaseStorage mFirebaseStorage;
     private StorageReference mImageStorageReference;
+
+    private String imageName = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, mMessagesDatabaseReference.toString());
 
         mImageStorageReference =
-                mFirebaseStorage.getReference().child("FwhnuuaipmSrOU2lhPw8JqRHddw2");
+                mFirebaseStorage.getReference().child("images");
 
         Log.d(TAG, mImageStorageReference.toString());
 
@@ -210,19 +212,31 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         } else if (requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK) {
+
+            // place actual image into google-cloud-storage
             Uri selectedImageUri = data.getData();
             StorageReference imageRef =
                     mImageStorageReference.child(selectedImageUri.getLastPathSegment());
 
+            imageName = selectedImageUri.getLastPathSegment();
+
             imageRef.putFile(selectedImageUri)
                     .addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                            @SuppressWarnings("VisibleForTests") Uri downloadUrl = taskSnapshot.getDownloadUrl();
 
-                            @SuppressWarnings("VisibleForTests")Uri downloadUrl = taskSnapshot.getDownloadUrl();
-
+//                            FirebaseMessage firebaseMessage =
+//                                    new FirebaseMessage(null, null, mUsername, downloadUrl.toString());
+//                            mMessagesDatabaseReference.push().setValue(firebaseMessage);
                             FirebaseMessage firebaseMessage =
-                                    new FirebaseMessage(null, null, mUsername, downloadUrl.toString());
-                            mMessagesDatabaseReference.push().setValue(firebaseMessage);
+                                    new FirebaseMessage(null, null, mUsername,
+                                            "https://www.google.com/images/spin-32.gif");
+                            String key = mMessagesDatabaseReference.push().getKey();
+                            mMessagesDatabaseReference.child(key).setValue(firebaseMessage);
+
+                            firebaseMessage = new FirebaseMessage(null, null, mUsername,
+                                    downloadUrl.toString());
+                            mMessagesDatabaseReference.child(key).setValue(firebaseMessage);
                         }
                     });
         }
@@ -278,12 +292,21 @@ public class MainActivity extends AppCompatActivity {
             mChildEventListener = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                    Log.d(TAG, ".onChildAdded()");
                     FirebaseMessage firebaseMessage = dataSnapshot.getValue(FirebaseMessage.class);
                     mMessageAdapter.add(firebaseMessage);
                 }
 
-                public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-                public void onChildRemoved(DataSnapshot dataSnapshot) {}
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                    Log.d(TAG, ".onChildChanged()");
+                    FirebaseMessage firebaseMessage = dataSnapshot.getValue(FirebaseMessage.class);
+                    FirebaseMessage oldFirebaseMessage = mMessageAdapter.getItem(mMessageAdapter.getCount() - 1);
+                    mMessageAdapter.insert(firebaseMessage, mMessageAdapter.getCount() - 1);
+                    mMessageAdapter.remove(oldFirebaseMessage);
+                }
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, ".onChildRemoved()");
+                }
                 public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
                 public void onCancelled(DatabaseError databaseError) {}
             };
