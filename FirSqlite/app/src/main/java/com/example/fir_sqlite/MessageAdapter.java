@@ -44,18 +44,18 @@ public class MessageAdapter extends ArrayAdapter<FirebaseMessage> {
                     // resizes the image to 20x20 pixels
                     //.override(20, 20)
                     .into(imageImageView);
-            Log.d(TAG, message.getImageUrl());
+            //Log.d(TAG, message.getImageUrl());
         } else {
             messageTextView.setVisibility(View.VISIBLE);
             imageImageView.setVisibility(View.GONE);
             messageTextView.setText(message.getText());
 
-            Log.d(TAG, message.getText());
+            //Log.d(TAG, message.getText());
         }
         if (message.getName() != null) {
             authorTextView.setText(message.getName());
 
-            Log.d(TAG, message.getName());
+            //Log.d(TAG, message.getName());
         }
 
         return convertView;

@@ -41,6 +41,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+// for logging use: adb shell setprop log.tag.FA VERBOSE
+// for logging use: adb shell setprop debug.firebase.analytics.app com.example.fir_sqlite
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "*** " + MainActivity.class.getSimpleName();
 
@@ -67,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseStorage mFirebaseStorage;
     private StorageReference mImageStorageReference;
 
-    private String imageName = null;
+    private String mImageName = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
-                    Toast.makeText(MainActivity.this, "You're now signed in. Welcome to Firebase.", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(MainActivity.this, "You're now signed in. Welcome to Firebase.", Toast.LENGTH_SHORT).show();
                     onSignedInInitialize(user.getDisplayName());
                 } else {
                     // User is signed out
@@ -205,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == RC_SIGN_IN) {
             if (resultCode == RESULT_OK) {
                 // Sign-in succeeded, set up the UI
-                Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show();
             } else if (resultCode == RESULT_CANCELED) {
                 // Sign in was canceled by the user, finish the activity
                 Toast.makeText(this, "Sign in canceled", Toast.LENGTH_SHORT).show();
@@ -218,29 +221,28 @@ public class MainActivity extends AppCompatActivity {
             StorageReference imageRef =
                     mImageStorageReference.child(selectedImageUri.getLastPathSegment());
 
-            imageName = selectedImageUri.getLastPathSegment();
+            mImageName = selectedImageUri.getLastPathSegment();
 
             imageRef.putFile(selectedImageUri)
                     .addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             @SuppressWarnings("VisibleForTests") Uri downloadUrl = taskSnapshot.getDownloadUrl();
 
-//                            FirebaseMessage firebaseMessage =
-//                                    new FirebaseMessage(null, null, mUsername, downloadUrl.toString());
-//                            mMessagesDatabaseReference.push().setValue(firebaseMessage);
                             FirebaseMessage firebaseMessage =
                                     new FirebaseMessage(null, null, mUsername,
                                             "https://www.google.com/images/spin-32.gif");
+                            // upload spinner to google-cloud-storage
                             String key = mMessagesDatabaseReference.push().getKey();
                             mMessagesDatabaseReference.child(key).setValue(firebaseMessage);
 
-                            firebaseMessage = new FirebaseMessage(null, null, mUsername,
-                                    downloadUrl.toString());
+                            // upload image to google-cloud-storage
+                            firebaseMessage.setImageUrl(downloadUrl.toString());
                             mMessagesDatabaseReference.child(key).setValue(firebaseMessage);
                         }
                     });
         }
-    }
+
+   }
 
     @Override
     protected void onResume() {
@@ -287,22 +289,77 @@ public class MainActivity extends AppCompatActivity {
         detachDatabaseReadListener();
     }
 
-    private void attachDatabaseReadListener() {
+   private void attachDatabaseReadListener() {
         if (mChildEventListener == null) {
             mChildEventListener = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                     Log.d(TAG, ".onChildAdded()");
-                    FirebaseMessage firebaseMessage = dataSnapshot.getValue(FirebaseMessage.class);
-                    mMessageAdapter.add(firebaseMessage);
-                }
 
+                    final FirebaseMessage firebaseMessage = dataSnapshot.getValue(FirebaseMessage.class);
+                    if (firebaseMessage.getText() != null) {
+                        // received message, add to listview
+                        mMessageAdapter.add(firebaseMessage);
+                        return;
+                    }
+                    if (firebaseMessage.getImageUrl() != null) {
+                        if (firebaseMessage.getImageUrl().equals("https://www.google.com/images/spin-32.gif")) {
+                            // do nothing, wait for onChildChanged event
+                            return;
+                        } else {
+                            receiveImageOnEvent(firebaseMessage);
+                        }
+                    }
+                }
                 public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                     Log.d(TAG, ".onChildChanged()");
-                    FirebaseMessage firebaseMessage = dataSnapshot.getValue(FirebaseMessage.class);
-                    FirebaseMessage oldFirebaseMessage = mMessageAdapter.getItem(mMessageAdapter.getCount() - 1);
-                    mMessageAdapter.insert(firebaseMessage, mMessageAdapter.getCount() - 1);
-                    mMessageAdapter.remove(oldFirebaseMessage);
+
+                    final FirebaseMessage firebaseMessage = dataSnapshot.getValue(FirebaseMessage.class);
+
+                    receiveImageOnEvent(firebaseMessage);
+
+                }
+                private void receiveImageOnEvent(final FirebaseMessage firebaseMessage) {
+                    Log.d(TAG, ".receiveImageOnEvent()");
+
+                    String imageName = null;
+                    if (mImageName != null) {
+                        Log.d(TAG, "android imageName: " + mImageName);
+
+                        // get name of image, produced by this app
+                        imageName = mImageName;
+                        mImageName = null;
+
+                    } else {
+                        Log.d(TAG, firebaseMessage.getImageUrl());
+
+                        // get name of image, stored in google-cloud-storage
+                        String pathName = firebaseMessage.getImageUrl();
+                        int lengthPathName = pathName.length();
+                        int i = pathName.lastIndexOf('/');
+                        imageName = pathName.substring(i + 1, lengthPathName);
+                        if (pathName.startsWith("https://")) {
+                            int j = imageName.indexOf('?');
+                            imageName = imageName.substring("images%2F".length(), j);
+                        }
+                        imageName = imageName.replace("%3A", ":");
+                    }
+
+                    Log.d(TAG, "imageName: " + imageName);
+
+                    // received image, add to listview
+                    mImageStorageReference.child(imageName).getDownloadUrl().
+                            addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    FirebaseMessage fbm = new FirebaseMessage();
+                                    fbm.setPhotoUrl(firebaseMessage.getPhotoUrl());
+                                    fbm.setText(firebaseMessage.getText());
+                                    fbm.setName(firebaseMessage.getName());
+                                    fbm.setImageUrl(uri.toString());
+                                    mMessageAdapter.add(fbm);
+                                }
+                            });
                 }
                 public void onChildRemoved(DataSnapshot dataSnapshot) {
                     Log.d(TAG, ".onChildRemoved()");
