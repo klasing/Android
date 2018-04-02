@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "551226926353",
+    "firebase_url": "https://gcp-4-firebase-and-drive.firebaseio.com",
+    "project_id": "gcp-4-firebase-and-drive",
+    "storage_bucket": "gcp-4-firebase-and-drive.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551226926353:android:d629cd1f6f9f2837",
+        "android_client_info": {
+          "package_name": "com.firebase.drive"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "551226926353-2ojf3r0ru99etf20omkgc5tjq3juso66.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIeD4I7c7xwQKYwQTLrOaFhCDbvfUJw7I"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
